@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Add, Remove } from '@material-ui/icons';
 import Navbar from '../components/Navbar'
 import Announcement from '../components/Announcement'
 import Footer from '../components/Footer';
 import { mobile } from '../responsive';
+import { useSelector } from 'react-redux';
+import StripeCheckout from 'react-stripe-checkout';
+
+
+const KEY = process.env.REACT_APP_STRIPE;
 
 const Container = styled.div``
 const Wrapper = styled.div`
@@ -120,17 +125,26 @@ const SummaryItem = styled.div`
 `
 const SummaryItemText = styled.span``
 const SummaryItemPrice = styled.span``
-const SummaryButton = styled.button`
+const Button = styled.button`
     width: 100%;
     padding: 10px;
     background-color: black;
     color: white;
     font-weight: 600;
+    cursor: pointer;
 `
 
 
 
 const Cart = () => {
+    const cart = useSelector(state => state.cart);
+
+    const [stripeToken, setStripeToken] = useState(null)
+    const onToken = (token) => {
+        setStripeToken(token)
+    }
+    console.log(stripeToken);
+
     return (
         <Container>
             <Navbar />
@@ -147,51 +161,33 @@ const Cart = () => {
                 </Top>
                 <Bottom>
                     <Info>
-                        <Product>
+                        {cart.products.map(product => (<Product>
                             <ProductDetail>
-                                <Image src="https://image.freepik.com/free-photo/excited-white-girl-bright-stylish-glasses-posing-pink-dreamy-curly-woman-playing-with-her-ginger-hair-laughing_197531-11045.jpg" />
+                                <Image src={product.img} />
                                 <Details>
-                                    <ProductName><b>Product: </b>JENY THUNDER DRESS</ProductName>
-                                    <ProductId><b>ID:</b>153135464132</ProductId>
+                                    <ProductName><b>Product: </b>{product.title}</ProductName>
+                                    <ProductId><b>ID:</b>{product.id}</ProductId>
                                     <ProductColor color="black" />
-                                    <ProductSize><b>Size: </b>45.5</ProductSize>
+                                    <ProductSize><b>Size: </b>{product.size}</ProductSize>
                                 </Details>
                             </ProductDetail>
                             <PriceDetail>
                                 <ProductAmountContainer>
                                     <Add />
-                                    <ProductAmount>2</ProductAmount>
+                                    <ProductAmount>{product.quantity}</ProductAmount>
                                     <Remove />
                                 </ProductAmountContainer>
-                                <ProductPrice>$ 20</ProductPrice>
+                                <ProductPrice>$ {product.price * product.quantity}</ProductPrice>
                             </PriceDetail>
                         </Product>
+                        ))}
                         <Hr />
-                        <Product>
-                            <ProductDetail>
-                                <Image src="https://image.freepik.com/free-photo/stunning-curly-female-model-jumping-purple-indoor-portrait-slim-girl-bright-yellow-dress_197531-10836.jpg" />
-                                <Details>
-                                    <ProductName><b>Product: </b>FARJAN THUNDER DRESS</ProductName>
-                                    <ProductId><b>ID:</b>153135464132</ProductId>
-                                    <ProductColor color="pink" />
-                                    <ProductSize><b>Size: </b>M</ProductSize>
-                                </Details>
-                            </ProductDetail>
-                            <PriceDetail>
-                                <ProductAmountContainer>
-                                    <Add />
-                                    <ProductAmount>2</ProductAmount>
-                                    <Remove />
-                                </ProductAmountContainer>
-                                <ProductPrice>$ 40</ProductPrice>
-                            </PriceDetail>
-                        </Product>
                     </Info>
                     <Summary>
                         <SummaryTitle>ORDER SUMMARY</SummaryTitle>
                         <SummaryItem>
                             <SummaryItemText>Subtotal</SummaryItemText>
-                            <SummaryItemPrice>$ 50</SummaryItemPrice>
+                            <SummaryItemPrice>$ {cart.total}</SummaryItemPrice>
                         </SummaryItem>
                         <SummaryItem>
                             <SummaryItemText>Estimated Shipping</SummaryItemText>
@@ -203,9 +199,20 @@ const Cart = () => {
                         </SummaryItem>
                         <SummaryItem type="total">
                             <SummaryItemText>Total</SummaryItemText>
-                            <SummaryItemPrice>$ 50</SummaryItemPrice>
+                            <SummaryItemPrice>$ {cart.total}</SummaryItemPrice>
                         </SummaryItem>
-                        <SummaryButton>CHECKOUT NOW</SummaryButton>
+                        <StripeCheckout
+                            name="Lama Shop"
+                            image="https://avatars.githubusercontent.com/u/1486366?v=4"
+                            billingAddress
+                            shippingAddress
+                            description={`Your total is $${cart.total}`}
+                            amount={cart.total * 100}
+                            token={onToken}
+                            stripeKey={KEY}
+                        >
+                            <Button>CHECKOUT NOW</Button>
+                        </StripeCheckout>
                     </Summary>
                 </Bottom>
             </Wrapper>
